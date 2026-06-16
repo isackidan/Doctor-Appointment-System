@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #c09b62; /* Golden Brown */
+  --color-primary-hover: #a88550;
+  --color-secondary: #f3f4f6; /* Light Gray Background */
+  --color-sidebar-active: #f3f0f5; /* Light purple/gray for active sidebar links */
+}
+
+body {
+  background-color: var(--color-secondary, #f3f4f6);
+  color: #333333;
+}
+
+/* VS Code Style Slim Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.6);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.8);
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.6) transparent;
+}
