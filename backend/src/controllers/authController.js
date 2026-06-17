@@ -4,7 +4,10 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const register = async (req, res) => {
-    const { name, email, password, role, specialization, consultation_fee, certificate_url, hospital_address } = req.body;
+    const { name, email, password, role, specialization, consultation_fee, hospital_address } = req.body;
+    
+    // Get certificate filename if uploaded
+    const certificate_url = req.file ? `/uploads/${req.file.filename}` : null;
 
     // Basic Validation
     if (!name || !email || !password || !role) {
@@ -38,6 +41,9 @@ const register = async (req, res) => {
         if (role === 'DOCTOR') {
             if (!specialization || !consultation_fee || !hospital_address) {
                 throw new Error('Doctor requires specialization, consultation_fee, and hospital_address');
+            }
+            if (!certificate_url) {
+                throw new Error('Doctor requires a certificate document to be uploaded');
             }
             const docInsertQuery = `
                 INSERT INTO doctor_profiles (user_id, specialization, consultation_fee, certificate_url, hospital_address) 

@@ -6,27 +6,27 @@ import Button from '../../components/ui/Button';
 import toast from 'react-hot-toast';
 
 const AdminDoctors = () => {
-    const [pendingDoctors, setPendingDoctors] = useState([]);
+    const [doctors, setDoctors] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchPendingDoctors = async () => {
+        const fetchDoctors = async () => {
             try {
-                const response = await api.get('/admin/pending-doctors');
-                setPendingDoctors(response.data.data);
+                const response = await api.get('/admin/all-doctors');
+                setDoctors(response.data.data);
             } catch (error) {
                 console.error("Error fetching doctors", error);
             } finally {
                 setLoading(false);
             }
         };
-        fetchPendingDoctors();
+        fetchDoctors();
     }, []);
 
     const handleApprove = async (userId) => {
         try {
             await api.put(`/admin/approve-doctor/${userId}`);
-            setPendingDoctors(pendingDoctors.filter(doc => doc.user_id !== userId));
+            setDoctors(doctors.map(doc => doc.user_id === userId ? { ...doc, is_approved: true } : doc));
             toast.success("Doctor Approved Successfully!");
         } catch (error) {
             toast.error("Failed to approve doctor.");
@@ -56,7 +56,7 @@ const AdminDoctors = () => {
             header: 'Certificate',
             render: (row) => (
                 <a 
-                    href={row.certificate_url} 
+                    href={`http://localhost:5000${row.certificate_url}`} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="text-sm text-blue-500 hover:text-blue-700 hover:underline"
@@ -66,30 +66,42 @@ const AdminDoctors = () => {
             )
         },
         {
+            header: 'Status',
+            render: (row) => (
+                <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${row.is_approved ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    {row.is_approved ? 'Approved' : 'Pending'}
+                </span>
+            )
+        },
+        {
             header: 'Action',
             render: (row) => (
-                <Button 
-                    variant="primary" 
-                    className="py-1 px-3 text-xs"
-                    onClick={() => handleApprove(row.user_id)}
-                >
-                    Approve
-                </Button>
+                !row.is_approved ? (
+                    <Button 
+                        variant="primary" 
+                        className="py-1 px-3 text-xs"
+                        onClick={() => handleApprove(row.user_id)}
+                    >
+                        Approve
+                    </Button>
+                ) : (
+                    <span className="text-gray-400 text-xs font-medium">No Action</span>
+                )
             )
         }
     ];
 
-    if (loading) return <div className="p-10 text-center font-medium text-gray-500">Loading pending approvals...</div>;
+    if (loading) return <div className="p-10 text-center font-medium text-gray-500">Loading doctors list...</div>;
 
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-2xl font-bold text-gray-800">Pending Approvals</h2>
-                <p className="text-sm text-gray-500 mt-1">Review and approve new doctor registrations.</p>
+                <h2 className="text-2xl font-bold text-gray-800">All Doctors</h2>
+                <p className="text-sm text-gray-500 mt-1">Manage doctor registrations and statuses.</p>
             </div>
 
             <Card className="p-0 overflow-hidden">
-                <Table columns={columns} data={pendingDoctors} />
+                <Table columns={columns} data={doctors} />
             </Card>
         </div>
     );

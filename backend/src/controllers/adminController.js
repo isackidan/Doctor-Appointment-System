@@ -40,6 +40,26 @@ const getPendingDoctors = async (req, res) => {
     }
 };
 
+// Fetch all doctors (both approved and pending)
+const getAllDoctors = async (req, res) => {
+    try {
+        const query = `
+            SELECT u.id AS user_id, u.name, u.email, 
+                   dp.specialization, dp.certificate_url, dp.is_approved, dp.hospital_address
+            FROM users u
+            JOIN doctor_profiles dp ON u.id = dp.user_id
+            WHERE u.role = 'DOCTOR'
+            ORDER BY dp.is_approved ASC, u.name ASC;
+        `;
+        const { rows } = await pool.query(query);
+
+        res.status(200).json({ status: 'success', data: rows });
+    } catch (error) {
+        console.error('Get All Doctors Error:', error.message);
+        res.status(500).json({ status: 'error', message: 'Server error' });
+    }
+};
+
 // Get all appointments across the platform for Admin
 const getAllAppointments = async (req, res) => {
     try {
@@ -91,4 +111,4 @@ const getDashboardStats = async (req, res) => {
 };
 
 // Update the exports
-module.exports = { approveDoctor, getPendingDoctors, getAllAppointments, getDashboardStats };
+module.exports = { approveDoctor, getPendingDoctors, getAllDoctors, getAllAppointments, getDashboardStats };

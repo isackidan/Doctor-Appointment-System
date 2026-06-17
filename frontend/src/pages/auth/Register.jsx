@@ -8,7 +8,7 @@ import toast from 'react-hot-toast';
 const Register = () => {
     const [formData, setFormData] = useState({
         name: '', email: '', password: '', role: 'USER',
-        specialization: '', consultation_fee: '', hospital_address: ''
+        specialization: '', consultation_fee: '', hospital_address: '', certificate: null
     });
     const [isLoading, setIsLoading] = useState(false);
     const navigate = useNavigate();
@@ -17,11 +17,25 @@ const Register = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleFileChange = (e) => {
+        setFormData({ ...formData, certificate: e.target.files[0] });
+    };
+
     const handleRegister = async (e) => {
         e.preventDefault();
         setIsLoading(true);
+
+        const submitData = new FormData();
+        Object.keys(formData).forEach(key => {
+            if (formData[key] !== null) {
+                submitData.append(key, formData[key]);
+            }
+        });
+
         try {
-            await api.post('/auth/register', formData);
+            await api.post('/auth/register', submitData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
             toast.success('Registration successful! Please login.');
             navigate('/login');
         } catch (err) {
@@ -125,6 +139,18 @@ const Register = () => {
                                     placeholder="123 Health Ave, Medical City"
                                     onChange={handleChange} 
                                 />
+                                <div className="flex flex-col">
+                                    <label className="mb-1 text-sm font-medium text-gray-700">Medical Certificate</label>
+                                    <input 
+                                        type="file" 
+                                        name="certificate"
+                                        accept=".pdf,.jpg,.jpeg,.png"
+                                        required={formData.role === 'DOCTOR'}
+                                        onChange={handleFileChange}
+                                        className="text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                    />
+                                    <p className="mt-1 text-xs text-gray-400">PDF, JPG, or PNG (Max 5MB)</p>
+                                </div>
                             </div>
                         )}
 

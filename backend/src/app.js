@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const path = require('path');
 require('dotenv').config();
 
 const pool = require('./config/db'); // Import DB connection
@@ -19,6 +20,9 @@ app.use(express.json()); // Parse incoming JSON payloads
 app.use(cors()); // Allow requests from React frontend
 app.use(helmet()); // Secure HTTP headers
 app.use(morgan('dev')); // Log API requests in terminal
+
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health Check & DB Test Route
 app.get('/api/health', async (req, res) => {
