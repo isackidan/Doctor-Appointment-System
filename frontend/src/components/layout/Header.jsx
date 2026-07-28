@@ -1,9 +1,8 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { Search, Bell, LogOut, User, Menu } from 'lucide-react';
 
-const Header = ({ toggleMenu }) => {
+const Header = ({ title }) => {
     const { logout, user } = useContext(AuthContext);
     const navigate = useNavigate();
 
@@ -13,50 +12,48 @@ const Header = ({ toggleMenu }) => {
     };
 
     return (
-        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-4 md:px-6 shrink-0">
-            {/* Left side: Hamburger (Mobile) + Search */}
-            <div className="flex items-center gap-3">
-                <button 
-                    onClick={toggleMenu}
-                    className="md:hidden p-2 -ml-2 text-gray-500 hover:text-primary focus:outline-none"
-                >
-                    <Menu className="w-6 h-6" />
-                </button>
-                <div className="hidden sm:flex items-center bg-gray-50 rounded-md px-3 py-1.5 w-64 border border-gray-200">
-                    <Search className="w-4 h-4 text-gray-400 mr-2" />
-                    <input 
-                        type="text" 
-                        placeholder="Search Menu..." 
-                        className="bg-transparent border-none outline-none text-sm w-full text-gray-700"
-                    />
+        <header className="h-20 bg-surface/80 backdrop-blur-md border-b border-outline-variant/30 flex items-center justify-between px-6 md:px-8 shrink-0 sticky top-0 z-30">
+            {/* Left side: Mobile Title / Desktop Greeting */}
+            <div className="flex items-center">
+                <span className="md:hidden text-lg font-headline-md font-bold text-primary tracking-tight">
+                    {title || 'Lumina Health'}
+                </span>
+                <div className="hidden md:block">
+                    <h2 className="font-headline-md text-xl font-bold text-on-surface">Hello, {user?.name?.split(' ')[0] || 'User'}!</h2>
+                    <p className="font-body-sm text-sm text-on-surface-variant">Here is your daily health summary</p>
                 </div>
             </div>
 
             {/* Right side icons & profile */}
-            <div className="flex items-center gap-2 md:gap-4">
-                <button className="text-gray-500 hover:text-gray-700 relative p-2">
-                    <Bell className="w-5 h-5" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+            <div className="flex items-center gap-4">
+                <div className="hidden sm:flex items-center bg-surface-container rounded-full px-4 py-2 border border-outline-variant/20 shadow-sm hover:shadow transition-shadow">
+                    <span className="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+                    <input 
+                        type="text" 
+                        placeholder="Search..." 
+                        className="bg-transparent border-none focus:ring-0 text-sm font-body-sm text-on-surface placeholder:text-outline w-40 outline-none"
+                    />
+                </div>
+
+                <button className="text-on-surface-variant hover:text-primary relative p-2 transition-colors hover:bg-primary/5 rounded-full">
+                    <span className="material-symbols-outlined text-[24px]">notifications</span>
+                    <span className="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border border-surface"></span>
                 </button>
                 
-                <div className="flex items-center gap-2 md:gap-3 md:ml-4 md:border-l border-gray-200 md:pl-4">
-                    <div className="hidden md:flex flex-col text-right">
-                        <span className="text-sm font-semibold text-gray-800">
-                            {user?.role || 'User'}
-                        </span>
-                        <span className="text-xs text-gray-500 capitalize">
-                            {user?.role?.toLowerCase() || 'Role'}
-                        </span>
-                    </div>
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden shrink-0">
-                        <User className="w-5 h-5 text-gray-500" />
+                <div className="flex items-center gap-3 pl-2 border-l border-outline-variant/30">
+                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 border-2 border-primary-container p-[2px]">
+                        <img 
+                            src={`https://ui-avatars.com/api/?name=${user?.name || 'User'}&background=EFF6FF&color=1A56DB`} 
+                            alt="Profile" 
+                            className="w-full h-full rounded-full object-cover"
+                        />
                     </div>
                     <button 
                         onClick={handleLogout}
-                        className="ml-1 text-gray-400 hover:text-red-500 transition-colors p-2"
+                        className="hidden md:flex text-on-surface-variant hover:text-error transition-colors p-2 rounded-full hover:bg-error/5"
                         title="Logout"
                     >
-                        <LogOut className="w-5 h-5" />
+                        <span className="material-symbols-outlined text-[20px]">logout</span>
                     </button>
                 </div>
             </div>

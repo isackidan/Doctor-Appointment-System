@@ -1,59 +1,59 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { X } from 'lucide-react';
 
-const Sidebar = ({ links, title = "DocConnect", isOpen, closeMenu }) => {
+const Sidebar = ({ links, title = "Lumina Health" }) => {
     return (
-        <>
-            {/* Mobile Overlay */}
-            {isOpen && (
-                <div 
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden"
-                    onClick={closeMenu}
-                ></div>
-            )}
-
-            {/* Sidebar Container */}
-            <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 flex flex-col h-full transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
-                isOpen ? 'translate-x-0' : '-translate-x-full'
-            }`}>
-                {/* Logo Area */}
-                <div className="h-16 flex items-center justify-between px-6 border-b border-gray-50 shrink-0">
-                    <span className="text-xl font-bold text-gray-800 tracking-tight">
-                        {title}
-                    </span>
-                    <button onClick={closeMenu} className="md:hidden text-gray-500 hover:text-red-500">
-                        <X className="w-5 h-5" />
-                    </button>
+        <aside className="w-full h-full flex flex-col bg-surface border-r border-outline-variant/30">
+            {/* Logo Area */}
+            <div className="flex items-center space-x-2 px-6 py-6">
+                <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+                    <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>medical_services</span>
                 </div>
-
-                {/* Navigation Links */}
-                <div className="flex-1 overflow-y-auto py-4">
-                    <nav className="space-y-1 px-3">
-                        {links.map((link, index) => {
-                            const Icon = link.icon;
-                            return (
-                                <NavLink
-                                    key={index}
-                                    to={link.to}
-                                    onClick={closeMenu}
-                                    className={({ isActive }) =>
-                                        `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                                            isActive
-                                                ? 'bg-[var(--color-sidebar-active)] text-primary'
-                                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                                        }`
-                                    }
-                                >
-                                    {Icon && <Icon className="w-5 h-5" />}
-                                    {link.label}
-                                </NavLink>
-                            );
-                        })}
-                    </nav>
+                <div>
+                    <h1 className="font-headline-md text-xl font-extrabold text-primary tracking-tight">Lumina</h1>
+                    <p className="font-label-sm text-xs text-on-surface-variant opacity-70">{title}</p>
                 </div>
-            </aside>
-        </>
+            </div>
+
+            {/* Navigation Links */}
+            <nav className="flex-1 space-y-2 pt-6 px-4">
+                {links.map((link, index) => {
+                    const iconName = link.icon;
+                    return (
+                        <NavLink
+                            key={index}
+                            to={link.to}
+                            className={({ isActive }) =>
+                                `flex items-center space-x-3 px-4 py-3 rounded-lg font-label-md transition-all active:scale-[0.98] ${
+                                    isActive
+                                        ? 'bg-primary-container text-on-primary-container shadow-sm'
+                                        : 'text-on-surface-variant hover:bg-surface-container-high'
+                                }`
+                            }
+                        >
+                            {({ isActive }) => (
+                                <>
+                                    <span 
+                                        className="material-symbols-outlined" 
+                                        style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                                    >
+                                        {iconName}
+                                    </span>
+                                    <span>{link.label}</span>
+                                </>
+                            )}
+                        </NavLink>
+                    );
+                })}
+            </nav>
+
+            <div className="mt-auto border-t border-outline-variant/30 pt-4 pb-6 space-y-1 px-4">
+                <a className="flex items-center space-x-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-lg transition-all font-label-md cursor-pointer">
+                    <span className="material-symbols-outlined">help</span>
+                    <span>Help Center</span>
+                </a>
+            </div>
+        </aside>
     );
 };
 

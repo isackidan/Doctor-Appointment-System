@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// In Prisma 6 with prisma.config.ts, datasource doesn't strictly need url here if configured there,
+// but for standard tooling compatibility we can still declare the provider.
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  REJECTED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  role          Role
+  isVerified    Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  patientProfile Patient?
+  doctorProfile  Doctor?
+  refreshTokens  RefreshToken[]
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Patient {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String
+  lastName  String
+  phone     String?
+  dob       DateTime?
+  
+  appointments Appointment[]
+  reviews      Review[]
+}
+
+model Doctor {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName       String
+  lastName        String
+  specialization  String
+  experienceYears Int
+  consultationFee Float
+  isApproved      Boolean  @default(false)
+  certificateUrl  String?
+  availability    Json?    // e.g., { "monday": ["10:00", "11:00"] }
+  
+  appointments    Appointment[]
+  reviews         Review[]
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  patientId       String
+  patient         Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId        String
+  doctor          Doctor            @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  date            DateTime          // Start of the day or exact date
+  startTime       String            // e.g., "10:00 AM"
+  endTime         String            // e.g., "10:30 AM"
+  status          AppointmentStatus @default(PENDING)
+  reason          String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  
+  payment         Payment?
+  prescription    Prescription?
+}
+
+model Payment {
+  id            String      @id @default(uuid())
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  amount        Float
+  currency      String      @default("INR")
+  status        String      // PENDING, SUCCESS, FAILED, REFUNDED
+  razorpayOrderId String?
+  razorpayPaymentId String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   // Could be generic for all users, won't tie strongly to User model for flexibility or tie it
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId  String
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  rating    Int      // 1 to 5
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+model Prescription {
+  id            String      @id @default(uuid())
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  pdfUrl        String
+  notes         String?
+  createdAt     DateTime    @default(now())
+}

@@ -17,7 +17,6 @@ const bookAppointment = async (req, res) => {
 
     try {
         await client.query('BEGIN'); // 🚀 START TRANSACTION
-
         // 1. Check if slot exists and Lock the Row (SELECT FOR UPDATE)
         // Idhu dhaan Double Booking-a thadukkum!
         const slotQuery = `
@@ -138,9 +137,9 @@ const cancelAppointment = async (req, res) => {
             WHERE a.id = $1 FOR UPDATE
         `;
         const { rows } = await client.query(apptQuery, [appointmentId]);
-        
+
         if (rows.length === 0) throw new Error("Appointment not found");
-        
+
         const appointment = rows[0];
 
         if (appointment.status !== 'BOOKED') {

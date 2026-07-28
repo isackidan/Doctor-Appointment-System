@@ -5,6 +5,7 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ProtectedRoute from './components/ProtectedRoute';
 import UserDashboard from './pages/user/UserDashboard';
+import FindSpecialists from './pages/user/FindSpecialists';
 import BookingPage from './pages/user/BookingPage';
 import AdminDoctors from './pages/admin/AdminDoctors';
 import AdminAppointments from './pages/admin/AdminAppointments';
@@ -38,6 +39,7 @@ function App() {
             </ProtectedRoute>
           }>
             <Route path="dashboard" element={<UserDashboard />} />
+            <Route path="search" element={<FindSpecialists />} />
             <Route path="book/:doctorId" element={<BookingPage />} />
             <Route path="appointments" element={<UserAppointments />} />
             <Route path="prescription/:appointmentId" element={<ViewPrescription />} />

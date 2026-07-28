@@ -1,8 +1,10 @@
+-- Database: doctor
+
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     email VARCHAR(150) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,  -- INDHA COLUMN DHAAN PROBLEM AACHU
+    password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) CHECK (role IN ('USER', 'DOCTOR', 'ADMIN')) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -16,6 +18,7 @@ CREATE TABLE doctor_profiles (
     is_approved BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 -- Admin Settings
 CREATE TABLE admin_settings (
     id SERIAL PRIMARY KEY,
