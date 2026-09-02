@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom';
 
 const DoctorCard = ({ doctor }) => {
-    // Generate a random high rating for demo purposes
-    const rating = (Math.random() * (5.0 - 4.5) + 4.5).toFixed(1);
+    // Real rating calculated by PostgreSQL (defaults to 5.0 if new doctor)
+    const rating = parseFloat(doctor.rating || 5.0).toFixed(1);
+    const reviewCount = doctor.review_count || 0;
     
-    // Default images for doctors (simulating a high quality medical app)
-    const doctorImage = `https://ui-avatars.com/api/?name=${doctor.name}&background=EFF6FF&color=1A56DB&size=120`;
+    // Default images for doctors
+    const doctorImage = `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name)}&background=EFF6FF&color=1A56DB&size=120`;
 
     return (
         <div className="bg-white rounded-[16px] p-6 custom-shadow border border-outline-variant/30 hover:border-primary/30 hover:shadow-lg transition-all duration-300 flex flex-col md:flex-row gap-6">
@@ -18,7 +19,7 @@ const DoctorCard = ({ doctor }) => {
                         className="w-full h-full object-cover"
                     />
                     <div className="absolute bottom-0 w-full bg-primary/90 text-white text-[10px] font-bold text-center py-0.5 backdrop-blur-sm">
-                        TOP RATED
+                        VERIFIED
                     </div>
                 </div>
                 <div className="flex items-center gap-1.5 bg-tertiary-fixed/30 text-tertiary-fixed-variant px-3 py-1 rounded-full border border-tertiary/20">
@@ -34,9 +35,12 @@ const DoctorCard = ({ doctor }) => {
                         <h3 className="text-xl font-headline-md font-bold text-on-surface line-clamp-1">{doctor.name}</h3>
                         <p className="text-sm font-label-md text-primary mt-0.5">{doctor.specialization}</p>
                     </div>
-                    <div className="flex items-center gap-1 bg-surface-container-high px-2 py-1 rounded-lg shrink-0">
-                        <span className="material-symbols-outlined text-[14px] text-orange-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                        <span className="text-xs font-bold text-on-surface">{rating}</span>
+                    <div className="flex items-center gap-1 bg-amber-50 border border-amber-200/60 px-2.5 py-1 rounded-lg shrink-0">
+                        <span className="material-symbols-outlined text-[15px] text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                        <span className="text-xs font-bold text-amber-950">{rating}</span>
+                        {reviewCount > 0 && (
+                            <span className="text-[10px] text-amber-700 font-medium">({reviewCount})</span>
+                        )}
                     </div>
                 </div>
                 

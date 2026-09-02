@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { sendBookingConfirmation } = require('../utils/emailService');
 
 const bookAppointment = async (req, res) => {
     const { slot_id } = req.body;
@@ -20,9 +21,10 @@ const bookAppointment = async (req, res) => {
         // 1. Check if slot exists and Lock the Row (SELECT FOR UPDATE)
         // Idhu dhaan Double Booking-a thadukkum!
         const slotQuery = `
-            SELECT da.id, da.is_booked, dp.id AS doctor_id, dp.consultation_fee 
+            SELECT da.id, da.is_booked, da.slot_date, da.start_time, dp.id AS doctor_id, dp.consultation_fee, d_user.name AS doctor_name
             FROM doctor_availability da
             JOIN doctor_profiles dp ON da.doctor_id = dp.id
+            JOIN users d_user ON dp.user_id = d_user.id
             WHERE da.id = $1 FOR UPDATE
         `;
         const slotRes = await client.query(slotQuery, [slot_id]);
@@ -58,6 +60,14 @@ const bookAppointment = async (req, res) => {
         await client.query(`UPDATE doctor_availability SET is_booked = TRUE WHERE id = $1`, [slot_id]);
 
         await client.query('COMMIT'); // ✅ SAVE EVERYTHING
+
+        // Fetch patient details for non-blocking email dispatch
+        const patientRes = await pool.query('SELECT name, email FROM users WHERE id = $1', [patient_id]);
+        if (patientRes.rows.length > 0) {
+            const patient = patientRes.rows[0];
+            const formattedDate = new Date(slot.slot_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            sendBookingConfirmation(patient.email, patient.name, slot.doctor_name, formattedDate, slot.start_time, totalFee.toFixed(2));
+        }
 
         res.status(201).json({
             status: 'success',

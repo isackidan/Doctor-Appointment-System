@@ -1,114 +1,148 @@
-const pool = require('../config/db');
+const adminService = require('../services/adminService');
+const catchAsync = require('../utils/catchAsync');
 
-const approveDoctor = async (req, res) => {
-    const { doctorId } = req.params; // Expecting user_id of the doctor
+// 1. Dashboard
+const getDashboardStats = catchAsync(async (req, res) => {
+    const stats = await adminService.getDashboardStats();
+    res.status(200).json({ status: 'success', data: stats });
+});
 
-    try {
-        const updateQuery = `
-            UPDATE doctor_profiles 
-            SET is_approved = TRUE 
-            WHERE user_id = $1 RETURNING *;
-        `;
-        const { rows } = await pool.query(updateQuery, [doctorId]);
+// 2. User Management
+const getUsers = catchAsync(async (req, res) => {
+    const result = await adminService.getUsers(req.query);
+    res.status(200).json({ status: 'success', ...result });
+});
 
-        if (rows.length === 0) {
-            return res.status(404).json({ status: 'error', message: 'Doctor profile not found' });
-        }
+const createUser = catchAsync(async (req, res) => {
+    const result = await adminService.createUser(req.body);
+    res.status(201).json({ status: 'success', message: 'User created successfully', data: result });
+});
 
-        res.status(200).json({ status: 'success', message: 'Doctor approved successfully', data: rows[0] });
-    } catch (error) {
-        res.status(500).json({ status: 'error', message: 'Server error' });
-    }
+const updateUser = catchAsync(async (req, res) => {
+    const { userId } = req.params;
+    const result = await adminService.updateUser(userId, req.body);
+    res.status(200).json({ status: 'success', message: 'User updated', data: result });
+});
+
+const toggleUserStatus = catchAsync(async (req, res) => {
+    const { userId } = req.params;
+    const result = await adminService.toggleUserStatus(userId);
+    res.status(200).json({ status: 'success', message: `User status changed to ${result.statusText}`, data: result });
+});
+
+const resetPassword = catchAsync(async (req, res) => {
+    const { userId } = req.params;
+    const { password } = req.body;
+    const result = await adminService.resetUserPassword(userId, password);
+    res.status(200).json({ status: 'success', message: 'Password reset successfully', data: result });
+});
+
+// 3. Centralized Patient Management
+const getAllPatients = catchAsync(async (req, res) => {
+    const patients = await adminService.getAllPatients(req.query);
+    res.status(200).json({ status: 'success', data: patients });
+});
+
+// 4. Centralized Doctor Management
+const getAllDoctors = catchAsync(async (req, res) => {
+    const doctors = await adminService.getAllDoctors(req.query);
+    res.status(200).json({ status: 'success', data: doctors });
+});
+
+const approveDoctor = catchAsync(async (req, res) => {
+    const { doctorId } = req.params;
+    const result = await adminService.approveDoctor(doctorId);
+    res.status(200).json({ status: 'success', message: 'Doctor approved successfully', data: result });
+});
+
+// 5. Centralized Nurse Management
+const getAllNurses = catchAsync(async (req, res) => {
+    const nurses = await adminService.getAllNurses();
+    res.status(200).json({ status: 'success', data: nurses });
+});
+
+// 6. Centralized Lab Management
+const getAllLabOrders = catchAsync(async (req, res) => {
+    const orders = await adminService.getAllLabOrders(req.query);
+    res.status(200).json({ status: 'success', data: orders });
+});
+
+// 7. Centralized Pharmacy Management
+const getPharmacyOverview = catchAsync(async (req, res) => {
+    const overview = await adminService.getPharmacyOverview();
+    res.status(200).json({ status: 'success', data: overview });
+});
+
+// 8. Centralized Accounts Management
+const getAccountsOverview = catchAsync(async (req, res) => {
+    const overview = await adminService.getAccountsOverview();
+    res.status(200).json({ status: 'success', data: overview });
+});
+
+// 9. Centralized Appointment Management
+const getAllAppointments = catchAsync(async (req, res) => {
+    const appointments = await adminService.getAllAppointments(req.query);
+    res.status(200).json({ status: 'success', data: appointments });
+});
+
+// 10. Centralized Reports
+const getCentralizedReports = catchAsync(async (req, res) => {
+    const { type = 'revenue' } = req.params;
+    const report = await adminService.getCentralizedReports(type, req.query);
+    res.status(200).json({ status: 'success', data: report });
+});
+
+// 11. Audit Logs
+const getAuditLogs = catchAsync(async (req, res) => {
+    const { limit } = req.query;
+    const logs = await adminService.getAuditLogs(limit);
+    res.status(200).json({ status: 'success', data: logs });
+});
+
+// 12. Departments
+const getDepartments = catchAsync(async (req, res) => {
+    const departments = await adminService.getDepartments();
+    res.status(200).json({ status: 'success', data: departments });
+});
+
+const createDepartment = catchAsync(async (req, res) => {
+    const department = await adminService.createDepartment(req.body);
+    res.status(201).json({ status: 'success', message: 'Department created', data: department });
+});
+
+const deleteDepartment = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    await adminService.deleteDepartment(id);
+    res.status(200).json({ status: 'success', message: 'Department deleted' });
+});
+
+// Aliases for backward compatibility
+const createStaff = createUser;
+const getPendingDoctors = async (req, res, next) => {
+    const stats = await adminService.getDashboardStats();
+    res.status(200).json({ status: 'success', data: stats.pendingDoctors });
 };
 
-// Fetch doctors who are waiting for approval
-const getPendingDoctors = async (req, res) => {
-    try {
-        const query = `
-            SELECT u.id AS user_id, u.name, u.email, 
-                   dp.specialization, dp.certificate_url, dp.is_approved, dp.hospital_address
-            FROM users u
-            JOIN doctor_profiles dp ON u.id = dp.user_id
-            WHERE u.role = 'DOCTOR' AND dp.is_approved = FALSE;
-        `;
-        const { rows } = await pool.query(query);
-
-        res.status(200).json({ status: 'success', data: rows });
-    } catch (error) {
-        console.error('Get Pending Doctors Error:', error.message);
-        res.status(500).json({ status: 'error', message: 'Server error' });
-    }
+module.exports = {
+    getDashboardStats,
+    getUsers,
+    createUser,
+    createStaff,
+    updateUser,
+    toggleUserStatus,
+    resetPassword,
+    getAllPatients,
+    getAllDoctors,
+    approveDoctor,
+    getPendingDoctors,
+    getAllNurses,
+    getAllLabOrders,
+    getPharmacyOverview,
+    getAccountsOverview,
+    getAllAppointments,
+    getCentralizedReports,
+    getAuditLogs,
+    getDepartments,
+    createDepartment,
+    deleteDepartment
 };
-
-// Fetch all doctors (both approved and pending)
-const getAllDoctors = async (req, res) => {
-    try {
-        const query = `
-            SELECT u.id AS user_id, u.name, u.email, 
-                   dp.specialization, dp.certificate_url, dp.is_approved, dp.hospital_address
-            FROM users u
-            JOIN doctor_profiles dp ON u.id = dp.user_id
-            WHERE u.role = 'DOCTOR'
-            ORDER BY dp.is_approved ASC, u.name ASC;
-        `;
-        const { rows } = await pool.query(query);
-
-        res.status(200).json({ status: 'success', data: rows });
-    } catch (error) {
-        console.error('Get All Doctors Error:', error.message);
-        res.status(500).json({ status: 'error', message: 'Server error' });
-    }
-};
-
-// Get all appointments across the platform for Admin
-const getAllAppointments = async (req, res) => {
-    try {
-        // Joining 4 tables to get a complete view!
-        const query = `
-            SELECT a.id AS appointment_id, a.status, a.total_fee, a.created_at,
-                   p.name AS patient_name, p.email AS patient_email,
-                   d_user.name AS doctor_name,
-                   da.slot_date, da.start_time, da.end_time
-            FROM appointments a
-            JOIN users p ON a.patient_id = p.id
-            JOIN doctor_profiles dp ON a.doctor_id = dp.id
-            JOIN users d_user ON dp.user_id = d_user.id
-            JOIN doctor_availability da ON a.slot_id = da.id
-            ORDER BY a.created_at DESC;
-        `;
-        const { rows } = await pool.query(query);
-
-        res.status(200).json({ status: 'success', data: rows });
-    } catch (error) {
-        console.error('Get All Appointments Error:', error.message);
-        res.status(500).json({ status: 'error', message: 'Server error' });
-    }
-};
-
-// Get Dashboard Statistics for Admin
-const getDashboardStats = async (req, res) => {
-    try {
-        // Run multiple count & sum queries concurrently for better performance
-        const [patientsRes, doctorsRes, appointmentsRes, earningsRes] = await Promise.all([
-            pool.query("SELECT COUNT(*) FROM users WHERE role = 'USER'"),
-            pool.query("SELECT COUNT(*) FROM users WHERE role = 'DOCTOR'"),
-            pool.query("SELECT COUNT(*) FROM appointments"),
-            pool.query("SELECT SUM(admin_commission) AS total_commission FROM appointments WHERE status = 'COMPLETED'")
-        ]);
-
-        const stats = {
-            total_patients: parseInt(patientsRes.rows[0].count),
-            total_doctors: parseInt(doctorsRes.rows[0].count),
-            total_appointments: parseInt(appointmentsRes.rows[0].count),
-            total_earnings: parseFloat(earningsRes.rows[0].total_commission || 0).toFixed(2)
-        };
-
-        res.status(200).json({ status: 'success', data: stats });
-    } catch (error) {
-        console.error('Get Stats Error:', error.message);
-        res.status(500).json({ status: 'error', message: 'Server error' });
-    }
-};
-
-// Update the exports
-module.exports = { approveDoctor, getPendingDoctors, getAllDoctors, getAllAppointments, getDashboardStats };

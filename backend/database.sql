@@ -6,6 +6,7 @@ CREATE TABLE users (
     email VARCHAR(150) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(20) CHECK (role IN ('USER', 'DOCTOR', 'ADMIN')) NOT NULL,
+    phone VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -15,6 +16,7 @@ CREATE TABLE doctor_profiles (
     specialization VARCHAR(100) NOT NULL,
     consultation_fee DECIMAL(10, 2) NOT NULL,
     certificate_url TEXT,
+    hospital_address TEXT,
     is_approved BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -60,5 +62,16 @@ CREATE TABLE prescriptions (
     appointment_id UUID UNIQUE REFERENCES appointments(id) ON DELETE CASCADE,
     medication_details TEXT NOT NULL,
     notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Doctor Reviews & Ratings
+CREATE TABLE reviews (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    appointment_id UUID UNIQUE REFERENCES appointments(id) ON DELETE CASCADE,
+    patient_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    doctor_id UUID REFERENCES doctor_profiles(id) ON DELETE CASCADE,
+    rating INT CHECK (rating >= 1 AND rating <= 5) NOT NULL,
+    comment TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

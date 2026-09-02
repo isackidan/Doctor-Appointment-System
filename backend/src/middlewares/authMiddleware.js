@@ -1,7 +1,9 @@
 const jwt = require('jsonwebtoken');
+const { JWT_SECRET } = require('../config/jwt');
+const prisma = require('../config/prisma');
 
 // Verify token for all logged-in users
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
     let token = req.headers.authorization;
     if (!token || !token.startsWith("Bearer ")) {
         return res.status(403).json({ status: 'error', message: 'No token provided. Access Denied.' });
@@ -9,30 +11,55 @@ const verifyToken = (req, res, next) => {
 
     try {
         token = token.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded; // Attach user info to request
+        const decoded = jwt.verify(token, JWT_SECRET);
+        
+        // Attach user to req
+        req.user = decoded;
         next();
     } catch (err) {
-        return res.status(401).json({ status: 'error', message: 'Unauthorized. Invalid Token.' });
+        return res.status(401).json({ status: 'error', message: 'Unauthorized or token expired.' });
     }
 };
 
-// Check if user is an ADMIN
-const isAdmin = (req, res, next) => {
-    if (req.user && req.user.role === 'ADMIN') {
+// Granular RBAC Middleware: authorizeRoles('SUPER_ADMIN', 'RECEPTIONIST', ...)
+const authorizeRoles = (...allowedRoles) => {
+    return (req, res, next) => {
+        if (!req.user || !allowedRoles.includes(req.user.role)) {
+            return res.status(403).json({
+                status: 'error',
+                message: `Access denied. ${req.user ? req.user.role : 'Guest'} role does not have permission for this module.`
+            });
+        }
         next();
-    } else {
-        return res.status(403).json({ status: 'error', message: 'Require Admin Role!' });
-    }
+    };
 };
 
-// Check if user is a DOCTOR
-const isDoctor = (req, res, next) => {
-    if (req.user && req.user.role === 'DOCTOR') {
+// Audit Activity Log Middleware — Only logs on successful HTTP responses (2xx)
+const logActivity = (action, moduleName) => {
+    return (req, res, next) => {
+        res.on('finish', async () => {
+            if (res.statusCode >= 200 && res.statusCode < 300 && req.user) {
+                try {
+                    await prisma.activityLog.create({
+                        data: {
+                            userId: req.user.id,
+                            action,
+                            module: moduleName,
+                            details: `${req.method} ${req.originalUrl}`,
+                            ipAddress: req.ip || req.connection?.remoteAddress
+                        }
+                    });
+                } catch (e) {
+                    console.error('Audit Log Error:', e.message);
+                }
+            }
+        });
         next();
-    } else {
-        return res.status(403).json({ status: 'error', message: 'Require Doctor Role!' });
-    }
+    };
 };
 
-module.exports = { verifyToken, isAdmin, isDoctor };
+module.exports = {
+    verifyToken,
+    authorizeRoles,
+    logActivity
+};

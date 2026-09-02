@@ -1,12 +1,12 @@
-// src/routes/authRoutes.js
 const express = require('express');
-const { register, login } = require('../controllers/authController');
-const upload = require('../middlewares/uploadMiddleware');
+const { login, refresh, logout, forgotPassword, resetPassword } = require('../controllers/authController');
 
 const router = express.Router();
 
-// POST API for Registration
-router.post('/register', upload.single('certificate'), register);
 router.post('/login', login);
+router.post('/refresh', refresh);
+router.post('/logout', logout);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
 module.exports = router;

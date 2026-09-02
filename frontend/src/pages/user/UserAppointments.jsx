@@ -4,7 +4,8 @@ import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const UserAppointments = () => {
-    const [appointments, setAppointments] = useState([]);
+    const [appointments, setAppointments] = useState({ upcoming: [], previous: [], all: [] });
+    const [tab, setTab] = useState('upcoming');
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
@@ -14,131 +15,160 @@ const UserAppointments = () => {
 
     const fetchAppointments = async () => {
         try {
-            const response = await api.get('/appointments/my-appointments');
-            setAppointments(response.data.data);
-        } catch (error) {
-            console.error("Error fetching appointments", error);
+            setLoading(true);
+            const res = await api.get('/patient/appointments');
+            setAppointments(res.data.data);
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to load appointments');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleCancel = async (appointmentId) => {
-        if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
-
-        try {
-            await api.put(`/appointments/${appointmentId}/cancel`);
-            toast.success("Appointment cancelled successfully");
-            fetchAppointments(); 
-        } catch (error) {
-            toast.error(error.response?.data?.message || "Failed to cancel appointment.");
-        }
-    };
-
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center p-20">
-            <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-            <p className="mt-4 text-on-surface-variant font-label-md">Loading your history...</p>
-        </div>
-    );
+    const activeList = tab === 'upcoming' ? appointments.upcoming : appointments.previous;
 
     return (
-        <div className="space-y-6 max-w-7xl mx-auto pb-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-6 pb-16 max-w-7xl mx-auto">
             {/* Header */}
-            <div>
-                <h2 className="font-display text-4xl font-semibold text-on-surface tracking-tight">My Appointment History</h2>
-                <p className="text-on-surface-variant text-base mt-2">Track your past and upcoming consultations.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-on-surface">My Appointments</h1>
+                    <p className="text-xs text-on-surface-variant mt-0.5">Track your upcoming consultations and past medical visits.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate('/user/search')}
+                        className="px-4 py-2.5 bg-cyan-600 text-white rounded-xl text-xs font-bold hover:bg-cyan-700 transition shadow-sm inline-flex items-center gap-1.5"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                        Book New Appointment
+                    </button>
+                    <button
+                        onClick={fetchAppointments}
+                        className="p-2.5 bg-surface-container rounded-xl hover:bg-surface-container-high text-on-surface-variant transition"
+                        title="Refresh"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">refresh</span>
+                    </button>
+                </div>
             </div>
 
-            {appointments.length === 0 ? (
-                <div className="text-center bg-white/70 backdrop-blur-xl rounded-2xl text-on-surface-variant py-16 border border-outline-variant/30 font-label-md flex flex-col items-center gap-4 shadow-sm">
-                    <span className="material-symbols-outlined text-[48px] text-outline opacity-50">history_toggle_off</span>
-                    You haven't booked any appointments yet. Head to the dashboard to find a doctor!
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {appointments.map((appt) => {
-                        const date = new Date(appt.slot_date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-                        const time = `${appt.start_time.slice(0, 5)} - ${appt.end_time.slice(0, 5)}`;
-                        
-                        let statusColor = 'bg-surface-container-high text-on-surface';
-                        let statusIcon = 'schedule';
-                        
-                        if (appt.status === 'BOOKED') {
-                            statusColor = 'bg-primary-container text-on-primary-container';
-                            statusIcon = 'event_available';
-                        }
-                        else if (appt.status === 'COMPLETED') {
-                            statusColor = 'bg-tertiary-container text-on-tertiary-container';
-                            statusIcon = 'check_circle';
-                        }
-                        else if (appt.status === 'CANCELLED') {
-                            statusColor = 'bg-error-container text-on-error-container';
-                            statusIcon = 'cancel';
-                        }
+            {/* Tabs */}
+            <div className="flex gap-2 p-1 bg-surface-container rounded-2xl max-w-xs">
+                <button
+                    onClick={() => setTab('upcoming')}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                        tab === 'upcoming' ? 'bg-surface text-cyan-800 shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
+                >
+                    <span className="material-symbols-outlined text-[16px]">upcoming</span>
+                    Upcoming ({appointments.upcoming?.length || 0})
+                </button>
+                <button
+                    onClick={() => setTab('previous')}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                        tab === 'previous' ? 'bg-surface text-cyan-800 shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
+                >
+                    <span className="material-symbols-outlined text-[16px]">history</span>
+                    Previous ({appointments.previous?.length || 0})
+                </button>
+            </div>
 
-                        return (
-                            <div key={appt.appointment_id} className="bg-white/70 backdrop-blur-xl border border-outline-variant/30 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-center shrink-0 overflow-hidden">
-                                            <span className="material-symbols-outlined text-[28px] text-primary/70">stethoscope</span>
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-headline-sm font-bold text-on-surface line-clamp-1">{appt.doctor_name}</h3>
-                                            <p className="text-sm font-label-md text-primary">{appt.specialization}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="bg-surface-container-lowest border border-outline-variant/20 p-4 rounded-xl space-y-3 mb-6 flex-1">
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-[18px] text-outline">calendar_month</span>
-                                        <span className="font-body-md text-on-surface">{date}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="material-symbols-outlined text-[18px] text-outline">schedule</span>
-                                        <span className="font-body-md text-on-surface">{time}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 border-t border-outline-variant/20 pt-3">
-                                        <span className="material-symbols-outlined text-[18px] text-outline">payments</span>
-                                        <span className="font-label-md font-bold text-on-surface">Total Paid: ₹{appt.total_fee}</span>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex items-center justify-between mt-auto">
-                                    <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full ${statusColor}`}>
-                                        <span className="material-symbols-outlined text-[14px]">{statusIcon}</span>
-                                        <span className="text-[10px] font-label-sm font-bold uppercase tracking-wider">{appt.status}</span>
-                                    </div>
-                                    
-                                    <div className="flex gap-2">
-                                        {appt.status === 'COMPLETED' && (
-                                            <button 
-                                                onClick={() => navigate(`/user/prescription/${appt.appointment_id}`)}
-                                                className="bg-secondary-container text-on-secondary-container px-4 py-2 rounded-xl font-label-md font-semibold hover:bg-secondary hover:text-on-secondary transition-colors flex items-center gap-2"
+            {/* Appointments Table / Cards */}
+            <div className="bg-surface rounded-2xl border border-outline-variant/30 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="bg-surface-container-lowest border-b border-outline-variant/30 text-xs font-bold text-on-surface-variant uppercase tracking-wider">
+                                <th className="p-4">Date & Time</th>
+                                <th className="p-4">Doctor</th>
+                                <th className="p-4">Department</th>
+                                <th className="p-4">Token #</th>
+                                <th className="p-4">Status</th>
+                                <th className="p-4 text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-outline-variant/20 text-xs font-medium">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="6" className="p-10 text-center text-on-surface-variant">
+                                        <div className="w-8 h-8 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                                        <span>Loading appointments...</span>
+                                    </td>
+                                </tr>
+                            ) : activeList?.length === 0 ? (
+                                <tr>
+                                    <td colSpan="6" className="p-12 text-center text-on-surface-variant">
+                                        <span className="material-symbols-outlined text-[48px] opacity-40 mb-2 block">event_busy</span>
+                                        <p className="font-bold">No {tab} appointments found.</p>
+                                        {tab === 'upcoming' && (
+                                            <button
+                                                onClick={() => navigate('/user/search')}
+                                                className="mt-3 px-4 py-2 bg-cyan-600 text-white rounded-xl text-xs font-bold hover:bg-cyan-700 transition"
                                             >
-                                                <span className="material-symbols-outlined text-[18px]">prescriptions</span>
-                                                Prescription
+                                                Find a Doctor & Book Now
                                             </button>
                                         )}
+                                    </td>
+                                </tr>
+                            ) : (
+                                activeList?.map((appt) => {
+                                    const isDone = ['TREATMENT_COMPLETED', 'PAYMENT_COMPLETED'].includes(appt.status);
+                                    const isCancelled = appt.status === 'CANCELLED';
 
-                                        {appt.status === 'BOOKED' && (
-                                            <button 
-                                                onClick={() => handleCancel(appt.appointment_id)}
-                                                className="bg-error/10 text-error px-4 py-2 rounded-xl font-label-md font-semibold hover:bg-error hover:text-on-error transition-colors flex items-center gap-2"
-                                            >
-                                                <span className="material-symbols-outlined text-[18px]">event_busy</span>
-                                                Cancel
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
+                                    return (
+                                        <tr key={appt.id} className="hover:bg-surface-container-lowest transition-colors">
+                                            <td className="p-4 text-on-surface">
+                                                <p className="font-bold">{new Date(appt.date).toLocaleDateString()}</p>
+                                                <p className="text-[10px] text-on-surface-variant">{appt.startTime} - {appt.endTime}</p>
+                                            </td>
+                                            <td className="p-4 font-bold text-on-surface">
+                                                Dr. {appt.doctor?.user?.name}
+                                                <p className="text-[10px] font-normal text-on-surface-variant">{appt.doctor?.specialization}</p>
+                                            </td>
+                                            <td className="p-4 text-on-surface">
+                                                {appt.department?.name || 'General OPD'}
+                                            </td>
+                                            <td className="p-4 font-mono font-bold text-cyan-700">
+                                                {appt.token?.tokenNumber || 'Queue #'}
+                                            </td>
+                                            <td className="p-4">
+                                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                                    isDone ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
+                                                    isCancelled ? 'bg-rose-100 text-rose-800 border-rose-200' :
+                                                    'bg-cyan-100 text-cyan-800 border-cyan-200'
+                                                }`}>
+                                                    {appt.status.replace(/_/g, ' ')}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-right space-x-2">
+                                                {appt.prescription && (
+                                                    <button
+                                                        onClick={() => navigate('/user/prescriptions')}
+                                                        className="px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-bold hover:bg-emerald-100 transition"
+                                                    >
+                                                        Prescription
+                                                    </button>
+                                                )}
+                                                {appt.invoice && (
+                                                    <button
+                                                        onClick={() => navigate('/user/billing')}
+                                                        className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-xs font-bold hover:bg-amber-100 transition"
+                                                    >
+                                                        Bill
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
                 </div>
-            )}
+            </div>
         </div>
     );
 };

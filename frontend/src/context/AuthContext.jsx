@@ -8,16 +8,23 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Page refresh aagumbothu token irukkanu check pannum
         const token = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
         if (token) {
             try {
                 const decoded = jwtDecode(token);
-                // Token valid-a irundha user state set pannidu
-                setUser({ id: decoded.id, role: decoded.role });
+                if (decoded.exp * 1000 < Date.now()) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                } else if (savedUser) {
+                    setUser(JSON.parse(savedUser));
+                } else {
+                    setUser({ id: decoded.id, email: decoded.email, name: decoded.name, role: decoded.role });
+                }
             } catch (error) {
                 console.error("Invalid token", error);
                 localStorage.removeItem('token');
+                localStorage.removeItem('user');
             }
         }
         setLoading(false);
@@ -25,11 +32,13 @@ export const AuthProvider = ({ children }) => {
 
     const login = (token, userData) => {
         localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
     };
 
     const logout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
         setUser(null);
     };
 

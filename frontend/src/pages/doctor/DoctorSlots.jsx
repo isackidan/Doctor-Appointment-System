@@ -37,7 +37,7 @@ const DoctorSlots = () => {
             };
 
             await api.post('/doctor/slots', payload);
-            toast.success('Slot added successfully!');
+            toast.success('OPD Time Slot published successfully!');
             setFormData({ slot_date: '', start_time: '', end_time: '' });
         } catch (err) {
             toast.error(err.response?.data?.message || 'Failed to add slot.');
@@ -47,26 +47,38 @@ const DoctorSlots = () => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-            <div>
-                <h2 className="font-display text-4xl font-semibold text-on-surface tracking-tight mb-2">Manage Availability</h2>
-                <p className="font-body-lg text-on-surface-variant">Add new time slots for patient appointments.</p>
+        <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in duration-500 pb-20">
+            {/* Header Banner with Teal Doctor Theme */}
+            <div className="bg-teal-900 text-white p-6 md:p-8 rounded-3xl shadow-xl relative overflow-hidden flex items-center justify-between">
+                <div className="absolute right-[-10%] top-[-20%] w-72 h-72 bg-teal-600/30 rounded-full blur-3xl pointer-events-none"></div>
+                <div className="relative z-10 space-y-1">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-bold uppercase tracking-wider text-teal-200 mb-1">
+                        <span className="material-symbols-outlined text-[16px]">schedule</span>
+                        OPD Schedule Management
+                    </div>
+                    <h1 className="font-display text-3xl font-bold">Manage Doctor Time Slots</h1>
+                    <p className="text-teal-200 text-xs">Set available hours for OPD patient consultation slots.</p>
+                </div>
+                <div className="w-14 h-14 rounded-2xl bg-teal-800 border border-teal-700 text-teal-200 flex items-center justify-center font-bold text-2xl shadow-inner">
+                    🕒
+                </div>
             </div>
 
-            <div className="bg-white/70 backdrop-blur-xl border border-outline-variant/30 rounded-2xl p-6 md:p-8 shadow-sm">
-                <div className="flex items-center gap-3 mb-8 pb-6 border-b border-outline-variant/30">
-                    <div className="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+            {/* Create Slot Form Card */}
+            <div className="bg-white rounded-3xl border border-outline-variant/30 p-6 md:p-8 shadow-sm space-y-6">
+                <div className="flex items-center gap-3 pb-6 border-b border-outline-variant/30">
+                    <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-800 border border-teal-200 flex items-center justify-center shrink-0">
                         <span className="material-symbols-outlined text-[24px]">more_time</span>
                     </div>
                     <div>
-                        <h3 className="text-xl font-headline-sm font-bold text-on-surface">Create New Slot</h3>
-                        <p className="text-sm font-label-md text-primary mt-1">Set your available hours</p>
+                        <h3 className="text-xl font-bold text-on-surface">Publish New OPD Slot</h3>
+                        <p className="text-xs text-teal-700 font-bold mt-0.5">Define consultation hours for patient booking</p>
                     </div>
                 </div>
 
                 <form onSubmit={handleAddSlot} className="space-y-6">
                     <div>
-                        <label className="block font-label-md font-bold text-on-surface mb-2">Select Date</label>
+                        <label className="block text-xs font-bold uppercase text-on-surface mb-2">Select OPD Date *</label>
                         <div className="relative">
                             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">calendar_month</span>
                             <input
@@ -76,14 +88,14 @@ const DoctorSlots = () => {
                                 min={todayDate}
                                 value={formData.slot_date}
                                 onChange={handleChange}
-                                className="w-full bg-surface-container-lowest border border-outline-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3 pl-12 pr-4 text-on-surface font-body-lg transition-all outline-none"
+                                className="w-full bg-surface-container-lowest border-2 border-outline-variant/50 focus:border-teal-500 focus:ring-2 focus:ring-teal-200/50 rounded-2xl py-3.5 pl-12 pr-4 text-on-surface font-mono font-bold transition-all outline-none"
                             />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block font-label-md font-bold text-on-surface mb-2">Start Time</label>
+                            <label className="block text-xs font-bold uppercase text-on-surface mb-2">Start Time *</label>
                             <div className="relative">
                                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">schedule</span>
                                 <input
@@ -93,13 +105,13 @@ const DoctorSlots = () => {
                                     min={formData.slot_date === todayDate ? new Date().toTimeString().slice(0, 5) : undefined}
                                     value={formData.start_time}
                                     onChange={handleChange}
-                                    className="w-full bg-surface-container-lowest border border-outline-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3 pl-12 pr-4 text-on-surface font-body-lg transition-all outline-none"
+                                    className="w-full bg-surface-container-lowest border-2 border-outline-variant/50 focus:border-teal-500 focus:ring-2 focus:ring-teal-200/50 rounded-2xl py-3.5 pl-12 pr-4 text-on-surface font-mono font-bold transition-all outline-none"
                                 />
                             </div>
                         </div>
                         
                         <div>
-                            <label className="block font-label-md font-bold text-on-surface mb-2">End Time</label>
+                            <label className="block text-xs font-bold uppercase text-on-surface mb-2">End Time *</label>
                             <div className="relative">
                                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">update</span>
                                 <input
@@ -108,31 +120,31 @@ const DoctorSlots = () => {
                                     required
                                     value={formData.end_time}
                                     onChange={handleChange}
-                                    className="w-full bg-surface-container-lowest border border-outline-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl py-3 pl-12 pr-4 text-on-surface font-body-lg transition-all outline-none"
+                                    className="w-full bg-surface-container-lowest border-2 border-outline-variant/50 focus:border-teal-500 focus:ring-2 focus:ring-teal-200/50 rounded-2xl py-3.5 pl-12 pr-4 text-on-surface font-mono font-bold transition-all outline-none"
                                 />
                             </div>
                         </div>
                     </div>
 
-                    <div className="pt-6 mt-6 border-t border-outline-variant/30">
+                    <div className="pt-4 border-t border-outline-variant/30">
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className={`w-full py-3.5 rounded-xl font-label-lg font-bold flex items-center justify-center gap-2 transition-all shadow-md ${
+                            className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-lg ${
                                 isLoading 
                                 ? 'bg-surface-container-highest text-outline cursor-not-allowed shadow-none' 
-                                : 'bg-primary text-white hover:bg-primary-hover hover:shadow-lg hover:-translate-y-0.5 active:scale-95'
+                                : 'bg-teal-600 hover:bg-teal-700 text-white shadow-teal-900/20 active:scale-95'
                             }`}
                         >
                             {isLoading ? (
                                 <>
                                     <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                                    Adding Slot...
+                                    Publishing Time Slot...
                                 </>
                             ) : (
                                 <>
                                     <span className="material-symbols-outlined text-[20px]">add_circle</span>
-                                    Publish Slot
+                                    Publish Time Slot for Patients
                                 </>
                             )}
                         </button>

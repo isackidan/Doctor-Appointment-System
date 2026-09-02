@@ -11,18 +11,27 @@ const AppError = require('./utils/AppError');
 const globalErrorHandler = require('./middlewares/errorMiddleware');
 const prisma = require('./config/prisma');
 
-// Import routes
+// Import routes for all 8 Hospital ERP roles
 const authRoutes = require('./routes/authRoutes');
-const adminRoutes = require('./routes/adminRoutes');
+const workflowRoutes = require('./routes/workflowRoutes');
+const receptionistRoutes = require('./routes/receptionistRoutes');
+const nurseRoutes = require('./routes/nurseRoutes');
 const doctorRoutes = require('./routes/doctorRoutes');
+const labRoutes = require('./routes/labRoutes');
+const pharmacyRoutes = require('./routes/pharmacyRoutes');
+const accountsRoutes = require('./routes/accountsRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const medicineRoutes = require('./routes/medicineRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
-const startCronJobs = require('./utils/cronJobs');
+const userRoutes = require('./routes/userRoutes');
+const patientRoutes = require('./routes/patientRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 
 // 1. GLOBAL MIDDLEWARES
 app.use(helmet()); // Set security HTTP headers
-app.use(cors()); // Allow requests from React frontend (Can be configured with specific origin)
+app.use(cors()); // Allow requests from React frontend
 
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev')); // Development logging
@@ -30,7 +39,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // Limit requests from same API
 const limiter = rateLimit({
-  max: 100, // 100 requests per IP
+  max: 200, // 200 requests per IP
   windowMs: 60 * 60 * 1000, // 1 hour
   message: 'Too many requests from this IP, please try again in an hour!'
 });
@@ -49,7 +58,7 @@ app.get('/api/health', async (req, res, next) => {
         await prisma.$queryRaw`SELECT 1`;
         res.status(200).json({ 
             status: 'success', 
-            message: 'Server and Database are running perfectly!'
+            message: 'Hospital ERP Server & Prisma Database are running perfectly!'
         });
     } catch (error) {
         console.error(error);
@@ -57,36 +66,35 @@ app.get('/api/health', async (req, res, next) => {
     }
 });
 
-// 2. ROUTES
+// 2. MOUNT ROLE & WORKFLOW ROUTES
 app.use('/api/auth', authRoutes); 
-app.use('/api/admin', adminRoutes); 
-app.use('/api/doctor', doctorRoutes); 
+app.use('/api/workflow', workflowRoutes);
+app.use('/api/receptionist', receptionistRoutes);
+app.use('/api/nurse', nurseRoutes);
+app.use('/api/doctor', doctorRoutes);
+app.use('/api/lab', labRoutes);
+app.use('/api/pharmacy', pharmacyRoutes);
+app.use('/api/accounts', accountsRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/medicines', medicineRoutes); 
 app.use('/api/appointments', appointmentRoutes); 
+app.use('/api/user', userRoutes);
+app.use('/api/patient', patientRoutes);
+app.use('/api/reviews', reviewRoutes); 
 
 // Handling unhandled routes
-app.all('*', (req, res, next) => {
+app.use((req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
 // 3. GLOBAL ERROR HANDLING MIDDLEWARE
 app.use(globalErrorHandler);
 
-// Start Cron Jobs (if cronJobs file is properly handling Prisma now)
-if (typeof startCronJobs === 'function') {
-  try {
-    startCronJobs(); 
-  } catch (e) {
-    console.error("Failed to start cron jobs: ", e.message);
-  }
-}
-
-// 4. SERVER START (Handled by server.js or here if running node src/app.js)
-// If you use server.js, module.exports = app; is better.
-// But based on existing package.json `start: node src/app.js`, we listen here:
+// 4. SERVER START
 if (require.main === module) {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(`🚀 Hospital ERP Server is running on port ${PORT}`);
   });
 }
 
